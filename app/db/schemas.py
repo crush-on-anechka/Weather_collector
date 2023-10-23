@@ -1,8 +1,13 @@
+import sys
 from datetime import datetime
 from typing import Optional
 
 from pydantic import (BaseModel, Field, ValidationInfo, field_validator,
                       model_validator)
+
+sys.path.append('/app')
+
+from settings import CONSTR
 
 
 class CitySchema(BaseModel):
@@ -22,14 +27,14 @@ class CitySchema(BaseModel):
     @field_validator('latitude')
     @classmethod
     def latitude_valid_range(cls, v: float) -> float:
-        if not -90 <= v <= 90:
+        if not CONSTR['MIN_LAT_DEG'] <= v <= CONSTR['MAX_LAT_DEG']:
             raise ValueError('latitude must be in range from -90 to 90')
         return v
 
     @field_validator('longitude')
     @classmethod
     def longitude_valid_range(cls, v: float) -> float:
-        if not -180 <= v <= 180:
+        if not CONSTR['MIN_LON_DEG'] <= v <= CONSTR['MAX_LON_DEG']:
             raise ValueError('longitude must be in range from -180 to 180')
         return v
 
@@ -63,7 +68,7 @@ class WeatherSchema(BaseModel):
     @field_validator('temp', 'temp_min', 'temp_max')
     @classmethod
     def temp_valid_range(cls, v: float, info: ValidationInfo) -> float:
-        if v and not 100 < v < 400:
+        if v and not CONSTR['MIN_TEMP_KELVIN'] < v < CONSTR['MAX_TEMP_KELVIN']:
             raise ValueError(
                 f'invalid temperature value for field {info.field_name}')
         return v
@@ -71,7 +76,8 @@ class WeatherSchema(BaseModel):
     @field_validator('wind_speed', 'wind_gust')
     @classmethod
     def wind_valid_range(cls, v: float, info: ValidationInfo) -> float:
-        if v and not 0 <= v < 1000:
+        if (v and not CONSTR['MIN_WIND_SPEED_M_SEC']
+                <= v < CONSTR['MAX_WIND_SPEED_M_SEC']):
             raise ValueError(
                 f'invalid value for field {info.field_name}')
         return v
@@ -79,27 +85,31 @@ class WeatherSchema(BaseModel):
     @field_validator('pressure')
     @classmethod
     def pressure_valid_range(cls, v: int) -> int:
-        if v and not 0 < v < 2000:
+        if (v and not
+                CONSTR['MIN_PRESSURE_HPA'] < v < CONSTR['MAX_PRESSURE_HPA']):
             raise ValueError('invalid pressure value')
         return v
 
     @field_validator('humidity')
     @classmethod
     def humidity_valid_range(cls, v: int) -> int:
-        if v and not 0 <= v <= 100:
+        if (v and not CONSTR['MIN_HUMIDITY_PERC']
+                <= v <= CONSTR['MAX_HUMIDITY_PERC']):
             raise ValueError('invalid humidity value')
         return v
 
     @field_validator('wind_direction')
     @classmethod
     def wind_direction_valid_range(cls, v: int) -> int:
-        if v and not 0 <= v <= 360:
+        if (v and not
+                CONSTR['MIN_WIND_DIR_DEG'] <= v <= CONSTR['MAX_WIND_DIR_DEG']):
             raise ValueError('invalid wind direction value')
         return v
 
     @field_validator('clouds')
     @classmethod
     def clouds_valid_range(cls, v: int) -> int:
-        if v and not 0 <= v <= 100:
+        if (v and not CONSTR['MIN_CLOUDNESS_PERC']
+                <= v <= CONSTR['MAX_CLOUDNESS_PERC']):
             raise ValueError('invalid clouds value')
         return v
