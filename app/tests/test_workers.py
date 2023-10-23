@@ -1,6 +1,8 @@
 import datetime
 import sys
 
+import pytest
+
 sys.path.append('app/')
 
 from utils import read_file
@@ -72,7 +74,7 @@ def test_forecast_fetcher_process_response_returns_valid_data():
     assert result[0] == expected
 
 
-def test_city_fetcher_process_response_valid_data_returns_list_of_dicts():
+def test_city_fetcher_process_response_returns_valid_data():
     fetcher = CityFetcher('city_name')
     filename = 'app/tests/fixture_files/sample_city_info.json'
     response = read_file(filename)
@@ -93,13 +95,23 @@ def test_city_fetcher_process_response_invalid_data_returns_none():
     assert result is None
 
 
-def test_weather_fetcher_process_response_invalid_data_returns_list_with_none():
+@pytest.mark.parametrize('prm', [({'invalid': 'response'}),
+                                 ([{'invalid': 'response'}]),
+                                 123,
+                                 'invalid_response',
+                                 None])
+def test_weather_fetcher_process_response_invalid_data_returns_none(prm):
     fetcher = WeatherFetcher(1, 1, 1, 1)
-    result = fetcher._process_response({'invalid': 'response'})
+    result = fetcher._process_response(prm)
     assert result == [None]
 
 
-def test_forecast_fetcher_process_response_invalid_data_returns_empty_list():
+@pytest.mark.parametrize('prm', [({'invalid': 'response'}),
+                                 ([{'invalid': 'response'}]),
+                                 123,
+                                 'invalid_response',
+                                 None])
+def test_forecast_fetcher_process_response_invalid_data_returns_empty_lst(prm):
     fetcher = ForecastFetcher(1, 1, 1, 1)
-    result = fetcher._process_response({'invalid': 'response'})
+    result = fetcher._process_response(prm)
     assert result == []

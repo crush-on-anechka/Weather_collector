@@ -1,6 +1,7 @@
 import json
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from datetime import datetime as dt
 from typing import Optional
 
@@ -59,6 +60,9 @@ class Fetcher(ABC):
                      response.status_code, self.url)
 
     def _construct_mapping(self, item: dict) -> dict:
+        if not isinstance(item, Iterable):
+            return {}
+
         processed_response = {
             'city': self.city_id
         }
@@ -146,15 +150,17 @@ class ForecastFetcher(Fetcher):
         self.url = FORECAST_BASE_URL
 
     def _process_response(self, response: dict) -> list[Optional[dict]]:
-        response_items: list[dict] = response.get('list')
         items = []
-        if not response_items:
-            return items
-
-        for item in response_items:
-            processed_response: dict = self._construct_mapping(item)
-            valid_item: Optional[dict] = validate_response(
-                WeatherSchema, processed_response)
-            items.append(valid_item)
+        try:
+            response_items: list[dict] = response['list']
+        except (AttributeError, TypeError, KeyError) as err:
+            logger.error('processing response failed: %s: %s',
+                         type(err), *err.args)
+        else:
+            for item in response_items:
+                processed_response: dict = self._construct_mapping(item)
+                valid_item: Optional[dict] = validate_response(
+                    WeatherSchema, processed_response)
+                items.append(valid_item)
 
         return items
