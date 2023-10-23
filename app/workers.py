@@ -1,4 +1,5 @@
 import json
+import time
 from abc import ABC, abstractmethod
 from datetime import datetime as dt
 from typing import Optional
@@ -7,7 +8,8 @@ import requests
 from db.schemas import CitySchema, WeatherSchema
 from requests.exceptions import ConnectionError, ReadTimeout
 from settings import (API_KEY, CITY_DATA_BASE_URL, FORECAST_BASE_URL,
-                      MAX_REQUEST_RETRIES, WEATHER_BASE_URL, logger)
+                      MAX_REQUEST_RETRIES, REQUEST_TIMEOUT, WEATHER_BASE_URL,
+                      logger)
 from utils import log, validate_response
 
 
@@ -40,6 +42,8 @@ class Fetcher(ABC):
             except (ReadTimeout, ConnectionError) as err:
                 error_data = err
                 retry_counter -= 1
+                if retry_counter:
+                    time.sleep(REQUEST_TIMEOUT)
                 logger.debug('request error at: %s, %d tries left, info: %s',
                              self.url, retry_counter, error_data)
 

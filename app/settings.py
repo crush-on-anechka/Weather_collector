@@ -9,6 +9,7 @@ load_dotenv()
 API_KEY = os.environ.get('API_KEY')
 MAX_REQUEST_RETRIES = 3
 FETCH_INTERVAL_SEC = 3600
+REQUEST_TIMEOUT = 5
 
 # DATABASE
 DB = os.environ.get('POSTGRES_DB')
