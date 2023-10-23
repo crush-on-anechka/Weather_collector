@@ -63,7 +63,7 @@ def main() -> None:
     load_conditions()
     load_cities()
 
-    cities = get_cities_list()
+    cities: list[CityModel] = get_cities_list()
     fetch_weather(cities)
 
     scheduler = BlockingScheduler()

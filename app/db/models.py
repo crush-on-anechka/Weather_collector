@@ -1,8 +1,13 @@
-from settings import CONSTR
+import sys
+
 from sqlalchemy import (CheckConstraint, Column, DateTime, Float, ForeignKey,
                         Integer, PrimaryKeyConstraint, String,
                         UniqueConstraint)
 from sqlalchemy.orm import declarative_base
+
+sys.path.append('/app')
+
+from settings import CONSTR
 
 Base = declarative_base()
 

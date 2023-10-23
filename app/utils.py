@@ -63,9 +63,9 @@ def validate_response(schema: PydanticSchema,
         return valid_response.model_dump()
 
 
-def get_cities_list() -> list:
+def get_cities_list() -> list[CityModel]:
     session = next(get_session())
     with session.begin():
         cities = session.query(CityModel).all()
-    logger.info(type(cities))
+        session.expunge_all()
     return cities
