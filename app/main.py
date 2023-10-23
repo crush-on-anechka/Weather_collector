@@ -10,7 +10,8 @@ from db.schemas import ConditionSchema
 from db.session import get_session
 from settings import FETCH_INTERVAL_SEC, logger
 from sqlalchemy import delete
-from utils import bulk_insert_to_db, log, read_file, validate_response
+from utils import (bulk_insert_to_db, get_cities_list, log, read_file,
+                   validate_response)
 from workers import CityFetcher, ForecastFetcher, WeatherFetcher
 
 
@@ -35,12 +36,8 @@ def load_conditions() -> None:
 
 
 @log('info')
-def fetch_weather() -> None:
+def fetch_weather(cities) -> None:
     cur_time = time.time()
-    session = next(get_session())
-    with session.begin():
-        cities = session.query(CityModel).all()
-        session.execute(delete(WeatherForecastModel))
 
     weather_data, forecast_data = [], []
     for c in cities:
@@ -54,17 +51,24 @@ def fetch_weather() -> None:
     logger.info('got weather data for %d of %d cities',
                 len(weather_data), len(cities))
 
-    bulk_insert_to_db(WeatherFactModel, weather_data)
+    session = next(get_session())
+    with session.begin():
+        session.execute(delete(WeatherForecastModel))
+
     bulk_insert_to_db(WeatherForecastModel, forecast_data)
+    bulk_insert_to_db(WeatherFactModel, weather_data)
 
 
 def main() -> None:
     load_conditions()
     load_cities()
-    fetch_weather()
+
+    cities = get_cities_list()
+    fetch_weather(cities)
 
     scheduler = BlockingScheduler()
-    scheduler.add_job(fetch_weather, 'interval', seconds=FETCH_INTERVAL_SEC)
+    scheduler.add_job(
+        fetch_weather, 'interval', [cities], seconds=FETCH_INTERVAL_SEC)
     print('Press Ctrl+{0} to exit'.format('Break' if os.name == 'nt' else 'C'))
 
     try:

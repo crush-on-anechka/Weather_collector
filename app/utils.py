@@ -2,6 +2,7 @@ import json
 from functools import wraps
 from typing import Optional
 
+from db.models import CityModel
 from db.session import get_session
 from pydantic._internal._model_construction import \
     ModelMetaclass as PydanticSchema
@@ -60,3 +61,11 @@ def validate_response(schema: PydanticSchema,
         logger.error('response validation error: %s', err)
     else:
         return valid_response.model_dump()
+
+
+def get_cities_list() -> list:
+    session = next(get_session())
+    with session.begin():
+        cities = session.query(CityModel).all()
+    logger.info(type(cities))
+    return cities
