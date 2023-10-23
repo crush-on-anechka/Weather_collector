@@ -7,6 +7,7 @@ from typing import Optional
 
 import requests
 from db.schemas import CitySchema, WeatherSchema
+from exceptions import APIConnectionException, BadResponseStatusException
 from requests.exceptions import ConnectionError, ReadTimeout
 from settings import (API_KEY, CITY_DATA_BASE_URL, FORECAST_BASE_URL,
                       MAX_REQUEST_RETRIES, REQUEST_TIMEOUT, WEATHER_BASE_URL,
@@ -31,7 +32,7 @@ class Fetcher(ABC):
         }
 
     @log('debug')
-    def _get_api_response(self) -> Optional[dict]:
+    def _get_api_response(self) -> dict:
         logger.debug('sending request to %s with parameters: %s',
                      self.url, self.params)
 
@@ -45,22 +46,22 @@ class Fetcher(ABC):
                 retry_counter -= 1
                 if retry_counter:
                     time.sleep(REQUEST_TIMEOUT)
-                logger.debug('request error at: %s, %d tries left, info: %s',
-                             self.url, retry_counter, error_data)
 
         if not retry_counter:
-            logger.error('request error at: %s, %s', self.url, error_data)
-            return None
+            logger.debug('request error at: %s, %s', self.url, error_data)
+            raise APIConnectionException
 
         logger.debug(f'response {response.status_code} from {self.url}')
         if response.ok:
             return json.loads(response.text)
 
-        logger.error('Bad response status %d at: %s',
+        logger.debug('Bad response status %d at: %s',
                      response.status_code, self.url)
+        raise BadResponseStatusException
 
     def _construct_mapping(self, item: dict) -> dict:
         if not isinstance(item, Iterable):
+            logger.debug('invalid response type from %s', self.url)
             return {}
 
         processed_response = {
@@ -95,16 +96,20 @@ class Fetcher(ABC):
         return processed_response
 
     @abstractmethod
-    def _process_response(self, response) -> list[Optional[dict]]:
+    def _process_response(self, response) -> list[dict]:
         pass
 
     @property
-    def run(self) -> list[Optional[dict]] | None:
-        response: Optional[dict] = self._get_api_response()
-        if response:
-            processed_response: list[
-                Optional[dict]] = self._process_response(response)
+    def run(self) -> list[dict]:
+        try:
+            response: dict = self._get_api_response()
+        except (APIConnectionException, BadResponseStatusException) as err:
+            logger.error(f'API response error: {err}')
+        else:
+            processed_response: list[dict] = self._process_response(response)
             return processed_response
+
+        return []
 
 
 class CityFetcher(Fetcher):
@@ -115,7 +120,7 @@ class CityFetcher(Fetcher):
             'q': city_name
         }
 
-    def _process_response(self, response: list[dict]) -> list[Optional[dict]]:
+    def _process_response(self, response: list[dict]) -> list[dict]:
         try:
             processed_response = response[0]
         except (TypeError, IndexError, KeyError) as err:
@@ -126,7 +131,7 @@ class CityFetcher(Fetcher):
                 processed_response.pop('local_names')
             valid_response: Optional[dict] = validate_response(
                 CitySchema, processed_response)
-            return [valid_response]
+            return [valid_response] if valid_response else []
 
 
 class WeatherFetcher(Fetcher):
@@ -135,12 +140,12 @@ class WeatherFetcher(Fetcher):
         super().__init__(timestamp, city_id, lat, lon, params)
         self.url = WEATHER_BASE_URL
 
-    def _process_response(self, response: dict) -> list[Optional[dict]]:
+    def _process_response(self, response: dict) -> list[dict]:
         processed_response: dict = self._construct_mapping(response)
         processed_response['timestamp'] = self.timestamp
         valid_response: Optional[dict] = validate_response(
             WeatherSchema, processed_response)
-        return [valid_response]
+        return [valid_response] if valid_response else []
 
 
 class ForecastFetcher(Fetcher):
@@ -149,7 +154,7 @@ class ForecastFetcher(Fetcher):
         super().__init__(timestamp, city_id, lat, lon, params)
         self.url = FORECAST_BASE_URL
 
-    def _process_response(self, response: dict) -> list[Optional[dict]]:
+    def _process_response(self, response: dict) -> list[dict]:
         items = []
         try:
             response_items: list[dict] = response['list']
@@ -159,8 +164,11 @@ class ForecastFetcher(Fetcher):
         else:
             for item in response_items:
                 processed_response: dict = self._construct_mapping(item)
+                if not processed_response:
+                    continue
                 valid_item: Optional[dict] = validate_response(
                     WeatherSchema, processed_response)
-                items.append(valid_item)
+                if valid_item:
+                    items.append(valid_item)
 
         return items

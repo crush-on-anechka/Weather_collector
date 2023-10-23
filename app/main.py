@@ -51,12 +51,14 @@ def fetch_weather(cities) -> None:
     logger.info('got weather data for %d of %d cities',
                 len(weather_data), len(cities))
 
-    session = next(get_session())
-    with session.begin():
-        session.execute(delete(WeatherForecastModel))
+    if weather_data:
+        bulk_insert_to_db(WeatherFactModel, weather_data)
 
-    bulk_insert_to_db(WeatherForecastModel, forecast_data)
-    bulk_insert_to_db(WeatherFactModel, weather_data)
+    if forecast_data:
+        session = next(get_session())
+        with session.begin():
+            session.execute(delete(WeatherForecastModel))
+        bulk_insert_to_db(WeatherForecastModel, forecast_data)
 
 
 def main() -> None:

@@ -5,6 +5,7 @@ import pytest
 
 sys.path.append('app/')
 
+from exceptions import BadResponseStatusException
 from utils import read_file
 from workers import CityFetcher, ForecastFetcher, WeatherFetcher
 
@@ -20,8 +21,8 @@ def test_get_api_response_valid_response_is_returned_as_dict(requests_mock):
 def test_get_api_response_invalid_response_returns_none(requests_mock):
     fetcher = WeatherFetcher(1, 1, 1, 1)
     requests_mock.get(fetcher.url, status_code=404)
-    result = fetcher._get_api_response()
-    assert result is None
+    with pytest.raises(BadResponseStatusException):
+        fetcher._get_api_response()
 
 
 def test_weather_fetcher_process_response_returns_valid_data():
@@ -100,10 +101,10 @@ def test_city_fetcher_process_response_invalid_data_returns_none():
                                  123,
                                  'invalid_response',
                                  None])
-def test_weather_fetcher_process_response_invalid_data_returns_none(prm):
+def test_weather_fetcher_process_response_invalid_data_returns_empty_lst(prm):
     fetcher = WeatherFetcher(1, 1, 1, 1)
     result = fetcher._process_response(prm)
-    assert result == [None]
+    assert result == []
 
 
 @pytest.mark.parametrize('prm', [({'invalid': 'response'}),
