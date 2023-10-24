@@ -1,7 +1,6 @@
 import json
 import time
 from abc import ABC, abstractmethod
-from collections.abc import Iterable
 from datetime import datetime as dt
 from typing import Optional
 
@@ -60,7 +59,7 @@ class Fetcher(ABC):
         raise BadResponseStatusException
 
     def _construct_mapping(self, item: dict) -> dict:
-        if not isinstance(item, Iterable):
+        if not isinstance(item, dict):
             logger.debug('invalid response type from %s', self.url)
             return {}
 
@@ -103,8 +102,9 @@ class Fetcher(ABC):
     def run(self) -> list[dict]:
         try:
             response: dict = self._get_api_response()
-        except (APIConnectionException, BadResponseStatusException) as err:
-            logger.error(f'API response error: {err}')
+        except (APIConnectionException, BadResponseStatusException):
+            logger.error(
+                'API response error, see logger debug level for details')
         else:
             processed_response: list[dict] = self._process_response(response)
             return processed_response
@@ -132,6 +132,8 @@ class CityFetcher(Fetcher):
             valid_response: Optional[dict] = validate_response(
                 CitySchema, processed_response)
             return [valid_response] if valid_response else []
+
+        return []
 
 
 class WeatherFetcher(Fetcher):

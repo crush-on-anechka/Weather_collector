@@ -31,7 +31,7 @@ def load_cities() -> None:
 def load_conditions() -> None:
     data: dict = read_file('conditions.json')
     condition_models: list[Optional[dict]] = [
-        validate_response(ConditionSchema, i) for i in data]
+        validate_response(ConditionSchema, i) for i in data if i]
     bulk_insert_to_db(ConditionModel, condition_models)
 
 
