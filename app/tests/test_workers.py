@@ -5,7 +5,7 @@ import pytest
 
 sys.path.append('app/')
 
-from exceptions import BadResponseStatusException
+from exceptions import APIConnectionException, BadResponseStatusException
 from utils import read_file
 from workers import CityFetcher, ForecastFetcher, WeatherFetcher
 
@@ -18,7 +18,16 @@ def test_get_api_response_valid_response_is_returned_as_dict(requests_mock):
     assert result == expected
 
 
-def test_get_api_response_invalid_response_returns_none(requests_mock):
+@pytest.mark.parametrize('prm', ['http://so_very_invalid.url', ''])
+def test_get_api_response_connection_error_raises_exception(prm):
+    fetcher = WeatherFetcher(1, 1, 1, 1)
+    fetcher.url = prm
+    fetcher.request_timeout = 0
+    with pytest.raises(APIConnectionException):
+        fetcher._get_api_response()
+
+
+def test_get_api_response_bad_status_code_raises_exception(requests_mock):
     fetcher = WeatherFetcher(1, 1, 1, 1)
     requests_mock.get(fetcher.url, status_code=404)
     with pytest.raises(BadResponseStatusException):
@@ -90,14 +99,19 @@ def test_city_fetcher_process_response_returns_valid_data():
     assert result == expected
 
 
-def test_city_fetcher_process_response_invalid_data_returns_empty_list():
+@pytest.mark.parametrize('prm', [{'invalid': 'response'},
+                                 [{'invalid': 'response'}],
+                                 123,
+                                 'invalid_response',
+                                 None])
+def test_city_fetcher_process_response_invalid_data_returns_empty_list(prm):
     fetcher = CityFetcher('')
-    result = fetcher._process_response({'invalid': 'response'})
+    result = fetcher._process_response(prm)
     assert result == []
 
 
-@pytest.mark.parametrize('prm', [({'invalid': 'response'}),
-                                 ([{'invalid': 'response'}]),
+@pytest.mark.parametrize('prm', [{'invalid': 'response'},
+                                 [{'invalid': 'response'}],
                                  123,
                                  'invalid_response',
                                  None])
@@ -107,8 +121,8 @@ def test_weather_fetcher_process_response_invalid_data_returns_empty_list(prm):
     assert result == []
 
 
-@pytest.mark.parametrize('prm', [({'invalid': 'response'}),
-                                 ([{'invalid': 'response'}]),
+@pytest.mark.parametrize('prm', [{'invalid': 'response'},
+                                 [{'invalid': 'response'}],
                                  123,
                                  'invalid_response',
                                  None])

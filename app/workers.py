@@ -7,7 +7,7 @@ from typing import Optional
 import requests
 from db.schemas import CitySchema, WeatherSchema
 from exceptions import APIConnectionException, BadResponseStatusException
-from requests.exceptions import ConnectionError, ReadTimeout
+from requests.exceptions import ConnectionError, MissingSchema, ReadTimeout
 from settings import (API_KEY, CITY_DATA_BASE_URL, FORECAST_BASE_URL,
                       MAX_REQUEST_RETRIES, REQUEST_TIMEOUT, WEATHER_BASE_URL,
                       logger)
@@ -24,6 +24,7 @@ class Fetcher(ABC):
         self.timestamp = timestamp
         self.city_name = city_name
         self.city_id = city_id
+        self.request_timeout = REQUEST_TIMEOUT
         self.params = {
             'appid': API_KEY,
             'lat': lat,
@@ -40,11 +41,11 @@ class Fetcher(ABC):
             try:
                 response = requests.get(url=self.url, params=self.params)
                 break
-            except (ReadTimeout, ConnectionError) as err:
+            except (ConnectionError, MissingSchema, ReadTimeout) as err:
                 error_data = err
                 retry_counter -= 1
                 if retry_counter:
-                    time.sleep(REQUEST_TIMEOUT)
+                    time.sleep(self.request_timeout)
 
         if not retry_counter:
             logger.debug('request error at: %s, %s', self.url, error_data)
@@ -121,8 +122,9 @@ class CityFetcher(Fetcher):
 
     def _process_response(self, response: list[dict]) -> list[dict]:
         try:
+            assert isinstance(response, list)
             processed_response = response[0]
-        except (TypeError, IndexError, KeyError) as err:
+        except (AssertionError, TypeError, IndexError, KeyError) as err:
             logger.error('processing response failed: %s', err)
         else:
             if 'local_names' in processed_response:
