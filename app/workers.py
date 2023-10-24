@@ -102,9 +102,8 @@ class Fetcher(ABC):
     def run(self) -> list[dict]:
         try:
             response: dict = self._get_api_response()
-        except (APIConnectionException, BadResponseStatusException):
-            logger.error(
-                'API response error, see logger debug level for details')
+        except (APIConnectionException, BadResponseStatusException) as err:
+            logger.error('API response error: %s', err)
         else:
             processed_response: list[dict] = self._process_response(response)
             return processed_response
@@ -124,8 +123,7 @@ class CityFetcher(Fetcher):
         try:
             processed_response = response[0]
         except (TypeError, IndexError, KeyError) as err:
-            logger.error('processing response failed: %s: %s',
-                         type(err), *err.args)
+            logger.error('processing response failed: %s', err)
         else:
             if 'local_names' in processed_response:
                 processed_response.pop('local_names')
@@ -161,8 +159,7 @@ class ForecastFetcher(Fetcher):
         try:
             response_items: list[dict] = response['list']
         except (AttributeError, TypeError, KeyError) as err:
-            logger.error('processing response failed: %s: %s',
-                         type(err), *err.args)
+            logger.error('processing response failed: %s', err)
         else:
             for item in response_items:
                 processed_response: dict = self._construct_mapping(item)

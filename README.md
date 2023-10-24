@@ -16,6 +16,7 @@
         - POSTGRES_DB=database_name  
         - POSTGRES_USER=user  
         - POSTGRES_PASSWORD=password  
+        - POSTGRES_PORT=port  
         - API_KEY=api_key (генерируется при регистрации на [Openweathermap])
 
 - Приложение запускается в docker-контейнерах. Информация по установке и работе с Docker:  

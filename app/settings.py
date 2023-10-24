@@ -51,5 +51,5 @@ formatter = logging.Formatter(
     '%(asctime)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 logger = logging.getLogger('main_logger')
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 logger.addHandler(handler)
