@@ -90,10 +90,10 @@ def test_city_fetcher_process_response_returns_valid_data():
     assert result == expected
 
 
-def test_city_fetcher_process_response_invalid_data_returns_none():
+def test_city_fetcher_process_response_invalid_data_returns_empty_list():
     fetcher = CityFetcher('')
     result = fetcher._process_response({'invalid': 'response'})
-    assert result is None
+    assert result == []
 
 
 @pytest.mark.parametrize('prm', [({'invalid': 'response'}),
@@ -101,7 +101,7 @@ def test_city_fetcher_process_response_invalid_data_returns_none():
                                  123,
                                  'invalid_response',
                                  None])
-def test_weather_fetcher_process_response_invalid_data_returns_empty_lst(prm):
+def test_weather_fetcher_process_response_invalid_data_returns_empty_list(prm):
     fetcher = WeatherFetcher(1, 1, 1, 1)
     result = fetcher._process_response(prm)
     assert result == []
@@ -112,7 +112,7 @@ def test_weather_fetcher_process_response_invalid_data_returns_empty_lst(prm):
                                  123,
                                  'invalid_response',
                                  None])
-def test_forecast_fetcher_process_response_invalid_data_returns_empty_lst(prm):
+def test_forecast_fetcher_process_response_invalid_data_return_empty_list(prm):
     fetcher = ForecastFetcher(1, 1, 1, 1)
     result = fetcher._process_response(prm)
     assert result == []
