@@ -19,7 +19,6 @@ class Fetcher(ABC):
                  city_id: Optional[int] = None,
                  lat: Optional[float] = None,
                  lon: Optional[float] = None,
-                 params: Optional[dict] = None,
                  city_name: Optional[str] = None) -> None:
         self.timestamp = timestamp
         self.city_name = city_name
@@ -137,9 +136,9 @@ class CityFetcher(Fetcher):
 
 
 class WeatherFetcher(Fetcher):
-    def __init__(self, timestamp: float, city_id: int, lat: float, lon: float,
-                 params: Optional[dict] = None) -> None:
-        super().__init__(timestamp, city_id, lat, lon, params)
+    def __init__(self, timestamp: float, city_id: int,
+                 lat: float, lon: float) -> None:
+        super().__init__(timestamp, city_id, lat, lon)
         self.url = WEATHER_BASE_URL
 
     def _process_response(self, response: dict) -> list[dict]:
@@ -151,9 +150,9 @@ class WeatherFetcher(Fetcher):
 
 
 class ForecastFetcher(Fetcher):
-    def __init__(self, timestamp: float, city_id: int, lat: float, lon: float,
-                 params: Optional[dict] = None) -> None:
-        super().__init__(timestamp, city_id, lat, lon, params)
+    def __init__(self, timestamp: float, city_id: int,
+                 lat: float, lon: float) -> None:
+        super().__init__(timestamp, city_id, lat, lon)
         self.url = FORECAST_BASE_URL
 
     def _process_response(self, response: dict) -> list[dict]:
