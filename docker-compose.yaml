@@ -18,9 +18,9 @@ services:
   app:
     container_name: "wc_app"
     build: .
+    entrypoint: ["sh", "entrypoint.sh"]
     sysctls:
     - net.ipv6.conf.all.disable_ipv6=1
-    command: sh -c "cd app/db && alembic upgrade head && cd ../.. && python app/main.py --start program"
     depends_on:
       db:
         condition: service_healthy
