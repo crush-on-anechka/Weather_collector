@@ -9,8 +9,8 @@ from db.schemas import CitySchema, WeatherSchema
 from exceptions import APIConnectionException, BadResponseStatusException
 from requests.exceptions import ConnectionError, MissingSchema, ReadTimeout
 from settings import (API_KEY, CITY_DATA_BASE_URL, FORECAST_BASE_URL,
-                      MAX_REQUEST_RETRIES, REQUEST_TIMEOUT, WEATHER_BASE_URL,
-                      logger)
+                      MAX_REQUEST_RETRIES, REQUEST_TIMEOUT_SEC,
+                      WEATHER_BASE_URL, logger)
 from utils import log, validate_response
 
 
@@ -23,7 +23,7 @@ class Fetcher(ABC):
         self.timestamp = timestamp
         self.city_name = city_name
         self.city_id = city_id
-        self.request_timeout = REQUEST_TIMEOUT
+        self.request_timeout = REQUEST_TIMEOUT_SEC
         self.params = {
             'appid': API_KEY,
             'lat': lat,
@@ -123,7 +123,7 @@ class CityFetcher(Fetcher):
         try:
             assert isinstance(response, list)
             processed_response = response[0]
-        except (AssertionError, TypeError, IndexError, KeyError) as err:
+        except (AssertionError, IndexError) as err:
             logger.error('processing response failed: %s', err)
         else:
             if 'local_names' in processed_response:
@@ -159,7 +159,7 @@ class ForecastFetcher(Fetcher):
         items = []
         try:
             response_items: list[dict] = response['list']
-        except (AttributeError, TypeError, KeyError) as err:
+        except (TypeError, KeyError) as err:
             logger.error('processing response failed: %s', err)
         else:
             for item in response_items:

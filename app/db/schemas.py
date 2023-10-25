@@ -28,14 +28,18 @@ class CitySchema(BaseModel):
     @classmethod
     def latitude_valid_range(cls, v: float) -> float:
         if not CONSTR['MIN_LAT_DEG'] <= v <= CONSTR['MAX_LAT_DEG']:
-            raise ValueError('latitude must be in range from -90 to 90')
+            raise ValueError(
+                f'latitude must be in range from {CONSTR["MIN_LAT_DEG"]} '
+                f'to {CONSTR["MAX_LAT_DEG"]}')
         return v
 
     @field_validator('longitude')
     @classmethod
     def longitude_valid_range(cls, v: float) -> float:
         if not CONSTR['MIN_LON_DEG'] <= v <= CONSTR['MAX_LON_DEG']:
-            raise ValueError('longitude must be in range from -180 to 180')
+            raise ValueError(
+                f'longitude must be in range from {CONSTR["MIN_LON_DEG"]} '
+                f'to {CONSTR["MAX_LON_DEG"]}')
         return v
 
 
