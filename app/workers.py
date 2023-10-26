@@ -15,6 +15,8 @@ from utils import log, validate_response
 
 
 class Fetcher(ABC):
+    request_timeout: int = REQUEST_TIMEOUT_SEC
+
     def __init__(self, timestamp: Optional[float] = None,
                  city_id: Optional[int] = None,
                  lat: Optional[float] = None,
@@ -23,7 +25,6 @@ class Fetcher(ABC):
         self.timestamp = timestamp
         self.city_name = city_name
         self.city_id = city_id
-        self.request_timeout = REQUEST_TIMEOUT_SEC
         self.params = {
             'appid': API_KEY,
             'lat': lat,
@@ -120,12 +121,12 @@ class CityFetcher(Fetcher):
         }
 
     def _process_response(self, response: list[dict]) -> list[dict]:
-        try:
-            if isinstance(response, list):
-                processed_response = response[0]
-        except IndexError as err:
-            logger.error('processing response failed: %s', err)
+        if not isinstance(response, list):
+            logger.error('processing response failed: invalid response type')
+        elif not response:
+            logger.error('processing response failed: response is empty')
         else:
+            processed_response = response[0]
             if 'local_names' in processed_response:
                 processed_response.pop('local_names')
             valid_response: Optional[dict] = validate_response(
