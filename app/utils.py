@@ -49,6 +49,8 @@ def read_file(filename: str) -> dict:
             data = json.load(file)
     except FileNotFoundError:
         logger.error('file not found: %s', filename)
+    except json.JSONDecodeError:
+        logger.error('invalid JSON file: %s', filename)
 
     return data
 

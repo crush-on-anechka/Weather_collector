@@ -121,9 +121,9 @@ class CityFetcher(Fetcher):
 
     def _process_response(self, response: list[dict]) -> list[dict]:
         try:
-            assert isinstance(response, list)
-            processed_response = response[0]
-        except (AssertionError, IndexError) as err:
+            if isinstance(response, list):
+                processed_response = response[0]
+        except IndexError as err:
             logger.error('processing response failed: %s', err)
         else:
             if 'local_names' in processed_response:
