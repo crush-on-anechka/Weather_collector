@@ -1,14 +1,12 @@
-import os
 import time
 from sys import argv
 from typing import Optional
 
-from apscheduler.schedulers.blocking import BlockingScheduler
 from db.models import (CityModel, ConditionModel, WeatherFactModel,
                        WeatherForecastModel)
 from db.schemas import ConditionSchema
 from db.session import get_session
-from settings import FETCH_INTERVAL_SEC, logger
+from settings import logger
 from sqlalchemy import delete
 from utils import (bulk_insert_to_db, get_cities_list, log, read_file,
                    validate_response)
@@ -62,21 +60,8 @@ def fetch_weather(cities) -> None:
 
 
 def main() -> None:
-    load_conditions()
-    load_cities()
-
     cities: list[CityModel] = get_cities_list()
     fetch_weather(cities)
-
-    scheduler = BlockingScheduler()
-    scheduler.add_job(
-        fetch_weather, 'interval', [cities], seconds=FETCH_INTERVAL_SEC)
-    print('Press Ctrl+{0} to exit'.format('Break' if os.name == 'nt' else 'C'))
-
-    try:
-        scheduler.start()
-    except (KeyboardInterrupt, SystemExit):
-        pass
 
 
 def launcher() -> None:
