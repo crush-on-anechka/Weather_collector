@@ -34,9 +34,8 @@ def bulk_insert_to_db(model: SQLAlchemy_Model, data: list[dict]) -> None:
     if not data:
         logger.debug('failed writing to database: got empty list')
         return
-    session = next(get_session())
     try:
-        with session.begin():
+        with get_session() as session:
             session.execute(insert(model), data)
     except IntegrityError as err:
         logger.error('failed writing to database: %s', err)
@@ -66,8 +65,7 @@ def validate_response(schema: PydanticSchema,
 
 
 def get_cities_list() -> list[CityModel]:
-    session = next(get_session())
-    with session.begin():
+    with get_session() as session:
         cities = session.query(CityModel).all()
         session.expunge_all()
     return cities

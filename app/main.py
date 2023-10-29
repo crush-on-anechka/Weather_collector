@@ -53,8 +53,7 @@ def fetch_weather(cities) -> None:
         bulk_insert_to_db(WeatherFactModel, weather_data)
 
     if forecast_data:
-        session = next(get_session())
-        with session.begin():
+        with get_session() as session:
             session.execute(delete(WeatherForecastModel))
         bulk_insert_to_db(WeatherForecastModel, forecast_data)
 
